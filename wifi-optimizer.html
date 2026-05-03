@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus WiFi Optimizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & TOKENS ─────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#06090f;
+  --s1:#0c1220;
+  --s2:#111a2e;
+  --s3:#19253d;
+  --bd:#1d2c44;
+  --bd2:#253450;
+  --ac:#00d9ff;
+  --acd:rgba(0,217,255,.1);
+  --pu:#a855f7;
+  --pud:rgba(168,85,247,.12);
+  --gn:#22c55e;
+  --am:#f59e0b;
+  --rd:#ef4444;
+  --tx:#dde4f0;
+  --mt:#49607e;
+  --mt2:#364e6a;
+  --ff:'Syne',sans-serif;
+  --fm:'Space Mono',monospace;
+}
+html{height:100%;}
+body{min-height:100%;background:var(--bg);color:var(--tx);font-family:var(--ff);overflow-x:hidden;}
+
+/* grid bg */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,217,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,217,255,.022) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;z-index:0;
+}
+
+/* ── PAGE SYSTEM ──────────────────────────────── */
+.page{
+  position:fixed;inset:0;z-index:1;
+  display:flex;flex-direction:column;
+  transition:opacity .5s ease, transform .5s ease;
+  overflow-y:auto;
+}
+.page.hidden{opacity:0;pointer-events:none;transform:translateY(24px);}
+
+/* ══════════════════════════════════════════════
+   PAGE 1 — LANDING
+══════════════════════════════════════════════ */
+#page1{
+  align-items:center;
+  justify-content:center;
+  padding:40px 20px;
+}
+
+.brand{text-align:center;margin-bottom:48px;}
+.brand-icon{
+  width:64px;height:64px;
+  border:1.5px solid var(--ac);border-radius:14px;
+  display:inline-flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+  box-shadow:0 0 32px rgba(0,217,255,.12);
+}
+.brand-title{font-size:28px;font-weight:800;letter-spacing:.05em;line-height:1.1;}
+.brand-title span{color:var(--ac);}
+.brand-sub{font-family:var(--fm);font-size:11px;color:var(--mt);letter-spacing:.12em;margin-top:10px;}
+.brand-desc{font-size:13px;color:var(--mt);margin-top:14px;max-width:380px;line-height:1.7;text-align:center;}
+
+/* selector card */
+.sel-card{
+  width:100%;max-width:480px;
+  background:var(--s1);
+  border:1px solid var(--bd);
+  border-radius:16px;
+  padding:32px;
+}
+.sel-card-title{font-size:13px;font-weight:700;letter-spacing:.04em;margin-bottom:24px;color:var(--tx);}
+
+.field{margin-bottom:18px;}
+.field-lbl{
+  font-family:var(--fm);font-size:9px;letter-spacing:.14em;
+  color:var(--mt);text-transform:uppercase;margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.field-lbl-dot{width:6px;height:6px;border-radius:50%;}
+
+select{
+  width:100%;background:var(--s2);
+  border:1px solid var(--bd2);color:var(--tx);
+  padding:13px 36px 13px 14px;border-radius:9px;
+  font-family:var(--ff);font-size:14px;cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2349607e' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;
+  transition:border-color .2s,box-shadow .2s;
+}
+select:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(0,217,255,.1);}
+
+.swap-row{display:flex;align-items:center;gap:12px;margin:4px 0 18px;}
+.swap-line{flex:1;height:1px;background:var(--bd);}
+.swap-btn{
+  background:var(--s2);border:1px solid var(--bd2);
+  color:var(--mt);width:34px;height:34px;border-radius:50%;
+  cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s;flex-shrink:0;
+}
+.swap-btn:hover{border-color:var(--ac);color:var(--ac);transform:rotate(180deg);}
+
+/* signal preview strip */
+.signal-strip{
+  display:flex;gap:6px;margin-bottom:24px;
+}
+.sig-chip{
+  flex:1;padding:8px 6px;border-radius:7px;
+  text-align:center;border:1px solid transparent;
+  font-family:var(--fm);font-size:9px;letter-spacing:.05em;
+  transition:all .2s;
+}
+.sig-chip.active{border-color:currentColor;}
+
+/* main CTA */
+.cta-btn{
+  width:100%;background:var(--ac);color:var(--bg);
+  border:none;padding:15px;border-radius:9px;
+  font-family:var(--ff);font-size:14px;font-weight:800;
+  letter-spacing:.06em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:all .2s;
+}
+.cta-btn:hover{filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,217,255,.25);}
+.cta-btn:active{transform:translateY(0);}
+.cta-btn svg{flex-shrink:0;}
+
+/* bottom hint */
+.hint-row{
+  display:flex;gap:24px;margin-top:24px;justify-content:center;flex-wrap:wrap;
+}
+.hint-item{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;color:var(--mt);
+}
+.hint-dot{width:6px;height:6px;border-radius:50%;}
+
+/* ══════════════════════════════════════════════
+   PAGE 2 — RESULTS
+══════════════════════════════════════════════ */
+#page2{
+  flex-direction:column;
+  padding:0;
+}
+
+.res-header{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 28px;
+  border-bottom:1px solid var(--bd);
+  background:rgba(6,9,15,.9);
+  backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:50;
+}
+.res-hdr-left{display:flex;align-items:center;gap:14px;}
+.back-btn{
+  background:var(--s2);border:1px solid var(--bd2);
+  color:var(--mt);padding:7px 13px;border-radius:6px;
+  font-family:var(--fm);font-size:10px;letter-spacing:.05em;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  transition:all .15s;
+}
+.back-btn:hover{border-color:var(--ac);color:var(--ac);}
+.res-route-title{font-size:15px;font-weight:700;}
+.res-route-title span{color:var(--ac);}
+.res-hdr-right{display:flex;gap:8px;}
+.hdr-pill{font-family:var(--fm);font-size:9px;padding:4px 10px;border-radius:4px;border:1px solid var(--bd2);color:var(--mt);}
+.hdr-pill.ok{border-color:rgba(34,197,94,.35);color:var(--gn);}
+.hdr-pill.warn{border-color:rgba(245,158,11,.35);color:var(--am);}
+.hdr-pill.bad{border-color:rgba(239,68,68,.35);color:var(--rd);}
+
+/* canvas section */
+.canvas-section{
+  flex-shrink:0;
+  position:relative;
+  height:54vh;
+  min-height:320px;
+  border-bottom:1px solid var(--bd);
+}
+canvas{position:absolute;inset:0;width:100%;height:100%;}
+
+.cv-btns{
+  position:absolute;bottom:14px;right:14px;
+  display:flex;gap:6px;z-index:10;
+}
+.cbtn{
+  background:rgba(6,9,15,.9);border:1px solid var(--bd2);
+  color:var(--mt);padding:6px 13px;border-radius:5px;
+  font-family:var(--fm);font-size:9px;letter-spacing:.06em;
+  cursor:pointer;backdrop-filter:blur(8px);transition:all .15s;
+}
+.cbtn:hover{border-color:var(--ac);color:var(--ac);}
+.cbtn.on{border-color:var(--ac);color:var(--ac);background:var(--acd);}
+
+.cv-legend{
+  position:absolute;top:14px;left:14px;
+  display:flex;gap:10px;flex-wrap:wrap;
+  z-index:10;pointer-events:none;
+}
+.cvleg{display:flex;align-items:center;gap:5px;font-family:var(--fm);font-size:9px;color:var(--mt);}
+.cvleg-dot{width:7px;height:7px;border-radius:50%;}
+
+/* stats section — scrollable below canvas */
+.stats-section{
+  padding:28px;
+  display:flex;flex-direction:column;gap:28px;
+}
+
+.stats-title{
+  font-size:11px;font-family:var(--fm);letter-spacing:.12em;
+  color:var(--mt);text-transform:uppercase;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.stats-title::after{content:'';flex:1;height:1px;background:var(--bd);}
+
+/* big stats row */
+.big-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.bstat{
+  background:var(--s1);border:1px solid var(--bd);
+  border-radius:10px;padding:16px;
+}
+.bstat-lbl{font-family:var(--fm);font-size:9px;color:var(--mt);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+.bstat-val{font-family:var(--fm);font-size:22px;font-weight:700;color:var(--ac);line-height:1;}
+.bstat-unit{font-size:11px;color:var(--mt);margin-top:4px;}
+
+/* quality bar */
+.qual-bar-card{
+  background:var(--s1);border:1px solid var(--bd);
+  border-radius:10px;padding:20px;
+}
+.qb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.qb-label{font-size:13px;font-weight:700;}
+.qb-pct{font-family:var(--fm);font-size:20px;font-weight:700;color:var(--ac);}
+.qb-track{height:8px;background:var(--s3);border-radius:4px;overflow:hidden;}
+.qb-fill{height:100%;border-radius:4px;width:0%;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.qb-sub{font-size:11px;color:var(--mt);margin-top:8px;font-family:var(--fm);}
+
+/* path breakdown */
+.path-table{
+  background:var(--s1);border:1px solid var(--bd);
+  border-radius:10px;overflow:hidden;
+}
+.ptrow{
+  display:grid;
+  grid-template-columns:28px 1fr 90px 90px 80px;
+  align-items:center;gap:0;
+  padding:12px 18px;
+  border-bottom:1px solid var(--bd);
+  font-size:12px;
+  opacity:0;transform:translateY(6px);transition:all .3s;
+}
+.ptrow.vis{opacity:1;transform:translateY(0);}
+.ptrow:last-child{border-bottom:none;}
+.ptrow.header{
+  background:var(--s2);font-family:var(--fm);
+  font-size:9px;color:var(--mt);letter-spacing:.09em;text-transform:uppercase;
+  opacity:1;transform:none;
+}
+.ptrow.start-row{background:rgba(0,217,255,.04);}
+.ptrow.end-row{background:rgba(168,85,247,.04);}
+.ptrow.onpath{background:rgba(0,217,255,.03);}
+.step-num{font-family:var(--fm);font-size:10px;color:var(--mt);}
+.step-node{font-weight:700;}
+.step-rssi{font-family:var(--fm);font-size:11px;}
+.step-weight{font-family:var(--fm);font-size:11px;color:var(--mt);}
+.step-tag{display:inline-block;font-family:var(--fm);font-size:8px;padding:3px 8px;border-radius:3px;letter-spacing:.05em;}
+
+/* algo log */
+.log-card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:20px;}
+.log-inner{
+  font-family:var(--fm);font-size:10px;color:var(--mt);
+  max-height:160px;overflow-y:auto;line-height:2;
+}
+.log-inner::-webkit-scrollbar{width:3px;}
+.log-inner::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
+.ll{opacity:0;transform:translateY(3px);transition:all .25s;}
+.ll.sh{opacity:1;transform:translateY(0);}
+.la{color:var(--ac);}
+.lk{color:var(--gn);}
+.lw{color:var(--am);}
+.le{color:var(--rd);}
+
+/* tooltip */
+#tip{
+  position:fixed;background:rgba(12,18,32,.97);
+  border:1px solid var(--bd2);padding:9px 13px;border-radius:7px;
+  font-family:var(--fm);font-size:10px;color:var(--tx);
+  pointer-events:none;display:none;z-index:999;
+  backdrop-filter:blur(8px);line-height:1.8;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+
+@media(max-width:700px){
+  .big-stats{grid-template-columns:1fr 1fr;}
+  .ptrow{grid-template-columns:24px 1fr 70px 70px;}
+  .ptrow .step-weight{display:none;}
+  .stats-section{padding:16px;}
+  .sel-card{padding:22px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ PAGE 1 — LANDING ══════════════ -->
+<div class="page" id="page1">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M6 16.73a14.67 14.67 0 0 1 20 0" stroke="#00d9ff" stroke-width="2" stroke-linecap="round"/>
+        <path d="M1.9 12a20 20 0 0 1 28.2 0" stroke="#00d9ff" stroke-width="1.5" stroke-linecap="round" opacity=".35"/>
+        <path d="M10.7 21.5a8 8 0 0 1 10.6 0" stroke="#00d9ff" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="16" cy="27" r="1.8" fill="#00d9ff"/>
+      </svg>
+    </div>
+    <div class="brand-title">Campus <span>WiFi</span> Optimizer</div>
+    <div class="brand-sub">DIJKSTRA SIGNAL ROUTER · YOUR COLLEGE</div>
+    <div class="brand-desc">Find the strongest WiFi path between any two locations on campus using Dijkstra's algorithm — weight = 1 / |RSSI|</div>
+  </div>
+
+  <div class="sel-card">
+    <div class="sel-card-title">Choose your route</div>
+
+    <div class="field">
+      <div class="field-lbl">
+        <div class="field-lbl-dot" style="background:#00d9ff"></div>
+        From — Starting Location
+      </div>
+      <select id="selFrom">
+        <option value="fgate">🚪  Front Gate</option>
+        <option value="mba">🏢  MBA Building</option>
+        <option value="diploma">📐  Diploma Building</option>
+        <option value="pavilon">⛺  Pavilon</option>
+        <option value="rihc">🏥  RIHC</option>
+        <option value="library">📚  Library</option>
+        <option value="buddha">🌿  Buddha Garden</option>
+        <option value="mech">⚙️  Mechanical Building</option>
+        <option value="ece">📡  ECE Building</option>
+        <option value="cse">💻  CSE Building</option>
+        <option value="ee">⚡  EE Building</option>
+        <option value="bgate">🚪  Back Gate</option>
+      </select>
+    </div>
+
+    <div class="swap-row">
+      <div class="swap-line"></div>
+      <button class="swap-btn" id="swapBtn" title="Swap locations">⇅</button>
+      <div class="swap-line"></div>
+    </div>
+
+    <div class="field">
+      <div class="field-lbl">
+        <div class="field-lbl-dot" style="background:#a855f7"></div>
+        To — Destination
+      </div>
+      <select id="selTo">
+        <option value="bgate">🚪  Back Gate</option>
+        <option value="fgate">🚪  Front Gate</option>
+        <option value="mba">🏢  MBA Building</option>
+        <option value="diploma">📐  Diploma Building</option>
+        <option value="pavilon">⛺  Pavilon</option>
+        <option value="rihc">🏥  RIHC</option>
+        <option value="library">📚  Library</option>
+        <option value="buddha">🌿  Buddha Garden</option>
+        <option value="mech">⚙️  Mechanical Building</option>
+        <option value="ece">📡  ECE Building</option>
+        <option value="cse">💻  CSE Building</option>
+        <option value="ee">⚡  EE Building</option>
+      </select>
+    </div>
+
+    <!-- live signal preview -->
+    <div class="signal-strip" id="signalStrip"></div>
+
+    <button class="cta-btn" id="findBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Find Optimal WiFi Path
+    </button>
+
+    <div class="hint-row">
+      <div class="hint-item"><div class="hint-dot" style="background:#22c55e"></div>Strong signal preferred</div>
+      <div class="hint-item"><div class="hint-dot" style="background:#00d9ff"></div>12 nodes · 22 edges</div>
+      <div class="hint-item"><div class="hint-dot" style="background:#a855f7"></div>Dijkstra weighted</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE 2 — RESULTS ══════════════ -->
+<div class="page hidden" id="page2">
+
+  <div class="res-header">
+    <div class="res-hdr-left">
+      <button class="back-btn" id="backBtn">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        BACK
+      </button>
+      <div class="res-route-title" id="resTitle">— <span>→</span> —</div>
+    </div>
+    <div class="res-hdr-right">
+      <div class="hdr-pill" id="hdrHops">— hops</div>
+      <div class="hdr-pill" id="hdrQual">—</div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-section">
+    <canvas id="cv"></canvas>
+    <div class="cv-legend">
+      <div class="cvleg"><div class="cvleg-dot" style="background:#22c55e"></div>Excellent ≥−50</div>
+      <div class="cvleg"><div class="cvleg-dot" style="background:#06b6d4"></div>Good −67</div>
+      <div class="cvleg"><div class="cvleg-dot" style="background:#f59e0b"></div>Fair −75</div>
+      <div class="cvleg"><div class="cvleg-dot" style="background:#ef4444"></div>Weak</div>
+      <div class="cvleg">
+        <svg width="18" height="6"><line x1="0" y1="3" x2="18" y2="3" stroke="#00d9ff" stroke-width="2.5" stroke-dasharray="5 3"/></svg>
+        Optimal path
+      </div>
+    </div>
+    <div class="cv-btns">
+      <button class="cbtn on" id="btnHeat">HEATMAP</button>
+      <button class="cbtn on" id="btnAnim">ANIMATING</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-section" id="statsSection">
+
+    <!-- big 4 -->
+    <div>
+      <div class="stats-title">Route Overview</div>
+      <div class="big-stats">
+        <div class="bstat">
+          <div class="bstat-lbl">Total Hops</div>
+          <div class="bstat-val" id="s_hops">—</div>
+          <div class="bstat-unit">stops</div>
+        </div>
+        <div class="bstat">
+          <div class="bstat-lbl">Avg Signal</div>
+          <div class="bstat-val" id="s_rssi">—</div>
+          <div class="bstat-unit">dBm</div>
+        </div>
+        <div class="bstat">
+          <div class="bstat-lbl">Total Cost</div>
+          <div class="bstat-val" id="s_cost">—</div>
+          <div class="bstat-unit">Dijkstra weight</div>
+        </div>
+        <div class="bstat">
+          <div class="bstat-lbl">Best Node</div>
+          <div class="bstat-val" id="s_best" style="font-size:13px;margin-top:2px;">—</div>
+          <div class="bstat-unit" id="s_best_rssi"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- quality bar -->
+    <div class="qual-bar-card">
+      <div class="qb-top">
+        <div class="qb-label">Overall Signal Quality Score</div>
+        <div class="qb-pct" id="qbPct">0%</div>
+      </div>
+      <div class="qb-track"><div class="qb-fill" id="qbFill"></div></div>
+      <div class="qb-sub" id="qbSub">—</div>
+    </div>
+
+    <!-- step-by-step table -->
+    <div>
+      <div class="stats-title">Step-by-Step Path Breakdown</div>
+      <div class="path-table">
+        <div class="ptrow header">
+          <div>#</div>
+          <div>Location</div>
+          <div>RSSI</div>
+          <div>Weight (1/|R|)</div>
+          <div>Signal</div>
+        </div>
+        <div id="pathRows"></div>
+      </div>
+    </div>
+
+    <!-- algo log -->
+    <div>
+      <div class="stats-title">Dijkstra Algorithm Log</div>
+      <div class="log-card">
+        <div class="log-inner" id="logBox"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="tip"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════════════ */
+const N = {
+  fgate:   { id:'fgate',   name:'Front Gate',         short:'F.Gate',  rssi:-58, x:.10, y:.08 },
+  mba:     { id:'mba',     name:'MBA Building',        short:'MBA',     rssi:-45, x:.27, y:.14 },
+  diploma: { id:'diploma', name:'Diploma Building',    short:'Diploma', rssi:-63, x:.52, y:.09 },
+  rihc:    { id:'rihc',    name:'RIHC',                short:'RIHC',    rssi:-49, x:.76, y:.14 },
+  pavilon: { id:'pavilon', name:'Pavilon',             short:'Pavilon', rssi:-72, x:.37, y:.33 },
+  library: { id:'library', name:'Library',             short:'Library', rssi:-41, x:.64, y:.29 },
+  buddha:  { id:'buddha',  name:'Buddha Garden',       short:'Buddha',  rssi:-78, x:.18, y:.57 },
+  mech:    { id:'mech',    name:'Mechanical Bldg',     short:'Mech',    rssi:-66, x:.44, y:.58 },
+  ece:     { id:'ece',     name:'ECE Building',        short:'ECE',     rssi:-53, x:.68, y:.53 },
+  cse:     { id:'cse',     name:'CSE Building',        short:'CSE',     rssi:-40, x:.83, y:.38 },
+  ee:      { id:'ee',      name:'EE Building',         short:'EE',      rssi:-60, x:.80, y:.63 },
+  bgate:   { id:'bgate',   name:'Back Gate',           short:'B.Gate',  rssi:-55, x:.50, y:.90 },
+};
+
+const EDGES = [
+  ['fgate','mba'],['fgate','pavilon'],
+  ['mba','diploma'],['mba','pavilon'],['mba','library'],
+  ['diploma','rihc'],['diploma','pavilon'],['diploma','library'],
+  ['rihc','library'],['rihc','cse'],
+  ['pavilon','library'],['pavilon','buddha'],['pavilon','mech'],
+  ['library','cse'],['library','ece'],
+  ['buddha','mech'],
+  ['mech','ece'],['mech','bgate'],
+  ['ece','cse'],['ece','ee'],
+  ['cse','ee'],
+  ['ee','bgate'],
+];
+
+function buildGraph() {
+  const g = {};
+  for (const id in N) g[id] = [];
+  for (const [a,b] of EDGES) {
+    const w = (1/Math.abs(N[a].rssi) + 1/Math.abs(N[b].rssi)) / 2;
+    g[a].push({to:b,w});
+    g[b].push({to:a,w});
+  }
+  return g;
+}
+
+function dijkstra(g, src, dst) {
+  const dist={}, prev={}, vis=new Set();
+  for (const id in N) { dist[id]=Infinity; prev[id]=null; }
+  dist[src] = 0;
+  const pq = [...Object.keys(N)];
+  const log = [
+    `<span class="la">INIT</span> Graph: ${Object.keys(N).length} nodes, ${EDGES.length} edges`,
+    `<span class="la">SRC </span> <span class="lk">${N[src].name}</span> (RSSI ${N[src].rssi} dBm, w=${(1/Math.abs(N[src].rssi)).toFixed(5)})`,
+    `<span class="la">DST </span> <span class="lk">${N[dst].name}</span> (RSSI ${N[dst].rssi} dBm, w=${(1/Math.abs(N[dst].rssi)).toFixed(5)})`,
+    `<span class="la">RUN </span> Starting Dijkstra…`,
+  ];
+  while (pq.length) {
+    pq.sort((a,b) => dist[a]-dist[b]);
+    const u = pq.shift();
+    if (vis.has(u)) continue;
+    vis.add(u);
+    log.push(`<span class="la">VISIT</span> ${N[u].name} &nbsp;<span style="color:var(--mt)">dist=${dist[u].toFixed(4)}</span>`);
+    if (u === dst) break;
+    for (const {to,w} of g[u]) {
+      if (vis.has(to)) continue;
+      const alt = dist[u] + w;
+      if (alt < dist[to]) {
+        dist[to]=alt; prev[to]=u;
+        log.push(`<span class="lw">RELAX</span> ${N[to].name} ← ${dist[to].toFixed(4)}`);
+      }
+    }
+  }
+  const path=[]; let cur=dst;
+  while(cur){ path.unshift(cur); cur=prev[cur]; }
+  if (path[0]!==src) return {path:[],dist:0,log};
+  log.push(`<span class="lk">DONE </span> Path length: ${path.length-1} hops, cost: ${dist[dst].toFixed(4)}`);
+  log.push(`<span class="lk">PATH </span> ${path.map(id=>N[id].short).join(' → ')}`);
+  return {path, dist:dist[dst], log};
+}
+
+const GRAPH = buildGraph();
+
+/* ══════════════════════════════════════════════════════
+   SIGNAL STRIP ON LANDING PAGE
+══════════════════════════════════════════════════════ */
+function sigColor(r){ return r>=-50?'#22c55e':r>=-67?'#06b6d4':r>=-75?'#f59e0b':'#ef4444'; }
+function sigLabel(r){ return r>=-50?'EXCELLENT':r>=-67?'GOOD':r>=-75?'FAIR':'WEAK'; }
+function sigBadge(r){ return r>=-50?'bex':r>=-67?'bgood':r>=-75?'bfair':'bweak'; }
+
+function updateStrip() {
+  const from = document.getElementById('selFrom').value;
+  const to   = document.getElementById('selTo').value;
+  const strip = document.getElementById('signalStrip');
+  const nodes = [from, to];
+  strip.innerHTML = nodes.map(id => {
+    const n = N[id];
+    const col = sigColor(n.rssi);
+    return `<div class="sig-chip active" style="color:${col};border-color:${col}22;background:${col}0d">
+      <div style="font-size:11px;font-weight:700;margin-bottom:3px;">${n.short}</div>
+      <div style="font-size:10px;">${n.rssi} dBm</div>
+      <div style="font-size:8px;margin-top:2px;opacity:.7">${sigLabel(n.rssi)}</div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('selFrom').addEventListener('change', updateStrip);
+document.getElementById('selTo').addEventListener('change', updateStrip);
+updateStrip();
+
+document.getElementById('swapBtn').addEventListener('click', () => {
+  const f=document.getElementById('selFrom'), t=document.getElementById('selTo');
+  const fv=f.value, tv=t.value;
+  if([...f.options].some(o=>o.value===tv)) f.value=tv;
+  if([...t.options].some(o=>o.value===fv)) t.value=fv;
+  updateStrip();
+});
+
+/* ══════════════════════════════════════════════════════
+   CANVAS (PAGE 2)
+══════════════════════════════════════════════════════ */
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W, H, heatmap=true, animating=true, curPath=[], animRaf=null;
+
+// Traveling-dot animation state:
+// dotT = global progress 0..1 across the entire path
+// trailT = how far behind the dot the lit trail extends (0..dotT)
+let dotT = 0;          // 0 = start node, 1 = end node
+const DOT_SPEED = 0.004;  // progress per frame (~250 frames for full trip)
+const PAUSE_FRAMES = 40;  // frames to pause at end before restarting
+let pauseCounter = 0;
+
+// Build a flat list of {x,y} waypoints from the path, evenly-spaced by pixel distance
+// so the dot travels at constant visual speed regardless of edge length.
+let waypoints = [];   // [{x,y}] with total pixel length cached
+let wpCumDist = [];   // cumulative distances, same length as waypoints
+
+function buildWaypoints() {
+  if (!curPath.length) { waypoints=[]; wpCumDist=[]; return; }
+  waypoints = [];
+  // Sample each edge into sub-points for smooth travel
+  for (let i=0; i<curPath.length-1; i++) {
+    const pa = px(N[curPath[i]]);
+    const pb = px(N[curPath[i+1]]);
+    const steps = 30;
+    for (let s=0; s<=steps; s++) {
+      if (i>0 && s===0) continue; // avoid duplicate junction points
+      waypoints.push({
+        x: pa.x + (pb.x-pa.x)*(s/steps),
+        y: pa.y + (pb.y-pa.y)*(s/steps)
+      });
+    }
+  }
+  // Build cumulative distances
+  wpCumDist = [0];
+  for (let i=1; i<waypoints.length; i++) {
+    const dx=waypoints[i].x-waypoints[i-1].x;
+    const dy=waypoints[i].y-waypoints[i-1].y;
+    wpCumDist.push(wpCumDist[i-1]+Math.sqrt(dx*dx+dy*dy));
+  }
+}
+
+// Get x,y position at normalised progress t (0..1) along waypoints
+function posAtT(t) {
+  if (!waypoints.length) return {x:0,y:0};
+  const totalDist = wpCumDist[wpCumDist.length-1];
+  const target = t * totalDist;
+  // Binary search
+  let lo=0, hi=wpCumDist.length-1;
+  while (lo<hi-1) {
+    const mid=(lo+hi)>>1;
+    if (wpCumDist[mid]<=target) lo=mid; else hi=mid;
+  }
+  const seg = wpCumDist[hi]-wpCumDist[lo];
+  const frac = seg===0 ? 0 : (target-wpCumDist[lo])/seg;
+  return {
+    x: waypoints[lo].x + (waypoints[hi].x-waypoints[lo].x)*frac,
+    y: waypoints[lo].y + (waypoints[hi].y-waypoints[lo].y)*frac
+  };
+}
+
+function resizeCanvas() {
+  const wrap = document.querySelector('.canvas-section');
+  if (!wrap) return;
+  W = cv.width  = wrap.clientWidth;
+  H = cv.height = wrap.clientHeight;
+  buildWaypoints();
+  draw();
+}
+
+function px(node){ return {x:node.x*W, y:node.y*H}; }
+
+function inPath(a,b){
+  for(let i=0;i<curPath.length-1;i++)
+    if((curPath[i]===a&&curPath[i+1]===b)||(curPath[i]===b&&curPath[i+1]===a)) return true;
+  return false;
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+
+  // heatmap blobs
+  if(heatmap){
+    for(const id in N){
+      const n=N[id], p=px(n);
+      const r = Math.max(40,Math.min(110,(100+n.rssi)*2.4+40));
+      const col = sigColor(n.rssi);
+      const gr = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);
+      gr.addColorStop(0,col+'28'); gr.addColorStop(1,col+'00');
+      ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2);
+      ctx.fillStyle=gr; ctx.fill();
+    }
+  }
+
+  // all edges — dim background
+  for(const [a,b] of EDGES){
+    const pa=px(N[a]), pb=px(N[b]);
+    ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y);
+    ctx.strokeStyle='rgba(35,52,80,.65)'; ctx.lineWidth=1;
+    ctx.setLineDash([]);
+    ctx.stroke();
+  }
+
+  // PATH EDGES — draw as a static lit trail, then animate dot on top
+  if(curPath.length>1){
+    // 1) Full path in dim cyan (the "track")
+    for(let i=0;i<curPath.length-1;i++){
+      const pa=px(N[curPath[i]]), pb=px(N[curPath[i+1]]);
+      ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y);
+      ctx.strokeStyle='rgba(0,217,255,.18)'; ctx.lineWidth=3;
+      ctx.setLineDash([]);
+      ctx.stroke();
+    }
+
+    // 2) Lit portion of path from start up to dotT
+    if(animating && waypoints.length>1){
+      const totalDist = wpCumDist[wpCumDist.length-1];
+      const litUpTo = dotT * totalDist;
+      ctx.beginPath();
+      ctx.moveTo(waypoints[0].x, waypoints[0].y);
+      let drawn = false;
+      for(let i=1;i<waypoints.length;i++){
+        if(wpCumDist[i]<=litUpTo){
+          ctx.lineTo(waypoints[i].x, waypoints[i].y);
+          drawn=true;
+        } else {
+          // partial last segment
+          const seg=wpCumDist[i]-wpCumDist[i-1];
+          const frac=(litUpTo-wpCumDist[i-1])/seg;
+          ctx.lineTo(
+            waypoints[i-1].x+(waypoints[i].x-waypoints[i-1].x)*frac,
+            waypoints[i-1].y+(waypoints[i].y-waypoints[i-1].y)*frac
+          );
+          drawn=true;
+          break;
+        }
+      }
+      if(drawn){
+        ctx.strokeStyle='#00d9ff'; ctx.lineWidth=3;
+        ctx.setLineDash([]); ctx.stroke();
+      }
+
+      // 3) Traveling dot
+      const dp = posAtT(dotT);
+      // outer glow
+      ctx.beginPath(); ctx.arc(dp.x,dp.y,10,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,217,255,.2)'; ctx.fill();
+      // inner bright dot
+      ctx.beginPath(); ctx.arc(dp.x,dp.y,5,0,Math.PI*2);
+      ctx.fillStyle='#00d9ff'; ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    } else if(!animating){
+      // paused — draw full lit path
+      ctx.beginPath(); ctx.moveTo(px(N[curPath[0]]).x, px(N[curPath[0]]).y);
+      for(let i=1;i<curPath.length;i++){
+        const p=px(N[curPath[i]]); ctx.lineTo(p.x,p.y);
+      }
+      ctx.strokeStyle='#00d9ff'; ctx.lineWidth=3;
+      ctx.setLineDash([]); ctx.stroke();
+    }
+
+    // weight labels on path edges
+    ctx.font="8px 'Space Mono',monospace";
+    for(let i=0;i<curPath.length-1;i++){
+      const pa=px(N[curPath[i]]), pb=px(N[curPath[i+1]]);
+      const mx=(pa.x+pb.x)/2, my=(pa.y+pb.y)/2;
+      const wt=((1/Math.abs(N[curPath[i]].rssi)+1/Math.abs(N[curPath[i+1]].rssi))/2).toFixed(4);
+      ctx.fillStyle='rgba(0,217,255,.7)';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('w='+wt, mx, my-11);
+    }
+  }
+
+  // nodes
+  const R=13;
+  for(const id in N){
+    const n=N[id], p=px(n), col=sigColor(n.rssi);
+    const onp=curPath.includes(id);
+    const isStart=curPath[0]===id, isEnd=curPath[curPath.length-1]===id;
+
+    if(onp){
+      ctx.beginPath(); ctx.arc(p.x,p.y,R+10,0,Math.PI*2);
+      ctx.fillStyle=isStart?'#00d9ff30':isEnd?'#a855f730':col+'1a'; ctx.fill();
+    }
+
+    ctx.beginPath(); ctx.arc(p.x,p.y,R,0,Math.PI*2);
+    ctx.fillStyle = isStart?'#00d9ff':isEnd?'#a855f7':onp?col:'#0c1220';
+    ctx.fill();
+    ctx.strokeStyle = isStart?'#fff':isEnd?'#fff':onp?'#ffffffcc':col;
+    ctx.lineWidth = onp?2:1; ctx.stroke();
+
+    ctx.fillStyle = onp?'#06090f':col;
+    ctx.font="bold 8px 'Space Mono',monospace";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(n.rssi, p.x, p.y);
+
+    ctx.fillStyle = onp?'#dde4f0':'rgba(73,96,126,.9)';
+    ctx.font=(onp?'bold ':'')+"10px 'Syne',sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(n.short, p.x, p.y+R+4);
+  }
+}
+
+function tick(){
+  if(animating && curPath.length>1){
+    if(pauseCounter>0){
+      pauseCounter--;
+      if(pauseCounter===0) dotT=0; // restart after pause
+    } else {
+      dotT += DOT_SPEED;
+      if(dotT>=1){
+        dotT=1;
+        pauseCounter=PAUSE_FRAMES;
+      }
+    }
+  }
+  draw();
+  animRaf=requestAnimationFrame(tick);
+}
+
+function startAnim(){
+  dotT=0; pauseCounter=0;
+  if(!animRaf){ animRaf=requestAnimationFrame(tick); }
+}
+function stopAnim(){ if(animRaf){ cancelAnimationFrame(animRaf); animRaf=null; draw(); } }
+
+/* ══════════════════════════════════════════════════════
+   PAGE NAVIGATION
+══════════════════════════════════════════════════════ */
+function showPage2(){
+  document.getElementById('page1').classList.add('hidden');
+  document.getElementById('page2').classList.remove('hidden');
+  // scroll results to top
+  document.getElementById('page2').scrollTop=0;
+  setTimeout(resizeCanvas, 60);
+}
+function showPage1(){
+  document.getElementById('page2').classList.add('hidden');
+  document.getElementById('page1').classList.remove('hidden');
+  stopAnim(); curPath=[];
+}
+
+/* ══════════════════════════════════════════════════════
+   ADD LOG LINE
+══════════════════════════════════════════════════════ */
+function addLog(html, box){
+  const d=document.createElement('div'); d.className='ll'; d.innerHTML=html;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+  setTimeout(()=>d.classList.add('sh'),40);
+}
+
+/* ══════════════════════════════════════════════════════
+   FIND & RENDER RESULTS
+══════════════════════════════════════════════════════ */
+document.getElementById('findBtn').addEventListener('click', ()=>{
+  const from=document.getElementById('selFrom').value;
+  const to=document.getElementById('selTo').value;
+  if(from===to){
+    document.getElementById('selTo').style.borderColor='var(--rd)';
+    setTimeout(()=>document.getElementById('selTo').style.borderColor='',1200);
+    return;
+  }
+
+  const {path, dist, log} = dijkstra(GRAPH, from, to);
+  if(!path.length) return;
+  curPath = path;
+
+  // header
+  document.getElementById('resTitle').innerHTML=
+    `${N[from].name} <span>→</span> ${N[to].name}`;
+
+  // big stats
+  const hops = path.length-1;
+  const avgR  = Math.round(path.reduce((s,id)=>s+N[id].rssi,0)/path.length);
+  const bestId = path.reduce((b,id)=>N[id].rssi>N[b].rssi?id:b, path[0]);
+  const pct  = Math.max(0,Math.min(100,((avgR+90)/55)*100));
+  const qual = pct>70?'GOOD':pct>40?'FAIR':'WEAK';
+
+  document.getElementById('s_hops').textContent = hops;
+  document.getElementById('s_rssi').textContent = avgR;
+  document.getElementById('s_cost').textContent = dist.toFixed(4);
+  document.getElementById('s_best').textContent = N[bestId].short;
+  document.getElementById('s_best_rssi').textContent = N[bestId].rssi+' dBm';
+
+  const qcol = pct>70?'#22c55e':pct>40?'#f59e0b':'#ef4444';
+  document.getElementById('s_rssi').style.color = qcol;
+
+  const hdrQ = document.getElementById('hdrQual');
+  hdrQ.textContent = qual;
+  hdrQ.className = 'hdr-pill '+(pct>70?'ok':pct>40?'warn':'bad');
+  document.getElementById('hdrHops').textContent = hops+' hop'+(hops!==1?'s':'');
+
+  document.getElementById('qbPct').textContent = Math.round(pct)+'%';
+  document.getElementById('qbPct').style.color = qcol;
+  const fill=document.getElementById('qbFill');
+  fill.style.background=qcol;
+  setTimeout(()=>fill.style.width=pct+'%',300);
+  document.getElementById('qbSub').textContent =
+    pct>70?'Excellent coverage throughout the route — smooth connectivity expected.'
+    :pct>40?'Moderate coverage — some zones may experience reduced speeds.'
+    :'Weak coverage on this route — consider an alternative path if possible.';
+
+  // path table rows
+  const rows=document.getElementById('pathRows');
+  rows.innerHTML='';
+  path.forEach((id,i)=>{
+    const n=N[id], col=sigColor(n.rssi);
+    const isS=i===0, isE=i===path.length-1;
+    const row=document.createElement('div');
+    row.className='ptrow'+(isS?' start-row':isE?' end-row':' onpath');
+    row.innerHTML=`
+      <div class="step-num">${i+1}</div>
+      <div class="step-node">${n.name}${isS?' <span style="font-size:9px;color:var(--ac);font-family:var(--fm);"> START</span>':''}${isE?' <span style="font-size:9px;color:var(--pu);font-family:var(--fm);"> END</span>':''}</div>
+      <div class="step-rssi" style="color:${col}">${n.rssi} dBm</div>
+      <div class="step-weight">${(1/Math.abs(n.rssi)).toFixed(5)}</div>
+      <div><span class="step-tag" style="background:${col}18;color:${col}">${sigLabel(n.rssi)}</span></div>`;
+    rows.appendChild(row);
+    setTimeout(()=>row.classList.add('vis'), 300+i*80);
+  });
+
+  // algo log
+  const logBox=document.getElementById('logBox');
+  logBox.innerHTML='';
+  log.forEach((line,i)=>setTimeout(()=>addLog(line,logBox), i*55));
+
+  // show page + start canvas
+  showPage2();
+  setTimeout(()=>{ buildWaypoints(); startAnim(); }, 80);
+});
+
+document.getElementById('backBtn').addEventListener('click', showPage1);
+
+/* canvas buttons */
+document.getElementById('btnHeat').addEventListener('click',function(){
+  heatmap=!heatmap;
+  this.textContent=heatmap?'HEATMAP':'NO HEAT';
+  this.classList.toggle('on',heatmap);
+  draw();
+});
+document.getElementById('btnAnim').addEventListener('click',function(){
+  if(animRaf){ stopAnim(); this.textContent='PAUSED'; this.classList.remove('on'); }
+  else { startAnim(); this.textContent='ANIMATING'; this.classList.add('on'); }
+});
+
+/* tooltip on canvas */
+cv.addEventListener('mousemove', e=>{
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const tip=document.getElementById('tip');
+  let hit=null;
+  for(const id in N){ const p=px(N[id]); if(Math.hypot(mx-p.x,my-p.y)<16){hit=N[id];break;} }
+  if(hit){
+    cv.style.cursor='pointer';
+    tip.style.display='block';
+    tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-6)+'px';
+    tip.innerHTML=`<strong>${hit.name}</strong><br>RSSI: ${hit.rssi} dBm<br>Weight: ${(1/Math.abs(hit.rssi)).toFixed(5)}<br>Signal: ${sigLabel(hit.rssi)}`;
+  } else { cv.style.cursor='default'; tip.style.display='none'; }
+});
+cv.addEventListener('mouseleave',()=>document.getElementById('tip').style.display='none');
+
+window.addEventListener('resize', ()=>{ if(!document.getElementById('page2').classList.contains('hidden')){ resizeCanvas(); } });
+
+function sigLabel(r){ return r>=-50?'EXCELLENT':r>=-67?'GOOD':r>=-75?'FAIR':'WEAK'; }
+</script>
+</body>
+</html>
